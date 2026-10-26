@@ -1,0 +1,28 @@
+{
+  "request": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Reply with the single word: ready"
+      }
+    ],
+    "tools": null,
+    "response_format": null
+  },
+  "response": {
+    "id": "chatcmpl-probe-ready",
+    "object": "chat.completion",
+    "created": 0,
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "ready"
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  }
+}

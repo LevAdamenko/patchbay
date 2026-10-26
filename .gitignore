@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+*.key
+__pycache__/
+node_modules/
+.venv/
+*.egg-info/
+.DS_Store
+junit.xml
+cases/*/site/
+.record-cache/
+

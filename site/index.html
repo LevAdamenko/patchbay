@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PatchBay</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --running-bg: #78350f;
+      --running-border: #f59e0b;
+      --running-text: #fef3c7;
+      --ok-bg: #064e3b;
+      --ok-border: #10b981;
+      --ok-text: #d1fae5;
+      --fail-bg: #7f1d1d;
+      --fail-border: #ef4444;
+      --fail-text: #fee2e2;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+    .tagline {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+    .banner {
+      background-color: #854d0e;
+      color: #fef08a;
+      border: 1px solid #eab308;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .case-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .case-btn {
+      flex: 1;
+      min-width: 220px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    .case-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background-color: #273549;
+    }
+    .case-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-id {
+      font-size: 16px;
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+    .btn-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .stage-strip {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .stage-step {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 4px;
+      text-align: center;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      background-color: var(--card-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .stage-step.running, .stage-step.retry {
+      background-color: var(--running-bg);
+      border-color: var(--running-border);
+      color: var(--running-text);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    }
+    .stage-step.ok {
+      background-color: var(--ok-bg);
+      border-color: var(--ok-border);
+      color: var(--ok-text);
+    }
+    .stage-step.fail {
+      background-color: var(--fail-bg);
+      border-color: var(--fail-border);
+      color: var(--fail-text);
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .log-box {
+      background-color: #020617;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 24px;
+      color: #cbd5e1;
+    }
+    .log-entry {
+      padding: 2px 0;
+      word-break: break-all;
+    }
+    .log-start { color: #93c5fd; }
+    .log-retry { color: #fcd34d; }
+    .log-ok { color: #86efac; }
+    .log-fail { color: #fca5a5; }
+    .report-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      display: none;
+    }
+    .report-card h1 {
+      font-size: 22px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    .report-card h2 {
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #93c5fd;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+    .report-card h3 {
+      font-size: 15px;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+    .report-card p {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+    .report-card pre {
+      background-color: #020617;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      color: #f1f5f9;
+    }
+    .report-card code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>PatchBay</h1>
+      <p class="tagline">CVE → research → failing repro → patch → mutation gate → evidence report</p>
+    </header>
+
+    <div class="banner">Offline replay of recorded live Nemotron and Tavily responses. This static page plays back events and reports exported from that run (recorded pace, short gaps stretched for readability). Run the real pipeline yourself: see the README.</div>
+
+    <div class="case-buttons">
+      <button class="case-btn" data-case-id="CVE-2023-32681" onclick="startRun('CVE-2023-32681')"><div class="btn-id">CVE-2023-32681</div><div class="btn-sub">requests &bull; CWE-200</div></button>
+<button class="case-btn" data-case-id="CVE-2024-22195" onclick="startRun('CVE-2024-22195')"><div class="btn-id">CVE-2024-22195</div><div class="btn-sub">Jinja2 &bull; CWE-79</div></button>
+<button class="case-btn" data-case-id="CVE-2024-24762" onclick="startRun('CVE-2024-24762')"><div class="btn-id">CVE-2024-24762</div><div class="btn-sub">python-multipart &bull; CWE-1333</div></button>
+    </div>
+
+    <div class="stage-strip">
+      <div class="stage-step" id="stage-research">Research</div>
+<div class="stage-step" id="stage-brief">Brief</div>
+<div class="stage-step" id="stage-repro">Repro</div>
+<div class="stage-step" id="stage-patch">Patch</div>
+<div class="stage-step" id="stage-mutate">Mutate</div>
+<div class="stage-step" id="stage-report">Report</div>
+    </div>
+
+    <div class="section-title">Execution Log</div>
+    <div id="event-log" class="log-box">
+      <div class="log-entry" style="color: var(--text-muted);">Ready. Click a case button above to stream verification pipeline.</div>
+    </div>
+
+    <div id="report-wrapper" class="report-card">
+      <div class="section-title" style="margin-bottom: 16px;">Final Evidence Report</div>
+      <div id="report-view"></div>
+    </div>
+  </div>
+
+  <script>
+    const STAGES = ["research", "brief", "repro", "patch", "mutate", "report"];
+    const STATIC_REPLAY = true;
+    const MIN_GAP_MS = 350;
+    let currentEventSource = null;
+    let replayTimers = [];
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function renderMarkdown(md) {
+      if (!md) return "";
+      const escaped = escapeHtml(md);
+      const lines = escaped.split('\n');
+      const out = [];
+      let inCode = false;
+      let codeLines = [];
+      let paraLines = [];
+
+      function flushPara() {
+        if (paraLines.length > 0) {
+          out.push("<p>" + paraLines.join("<br>") + "</p>");
+          paraLines = [];
+        }
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith("```")) {
+          if (inCode) {
+            out.push("<pre><code>" + codeLines.join("\n") + "</code></pre>");
+            codeLines = [];
+            inCode = false;
+          } else {
+            flushPara();
+            inCode = true;
+            codeLines = [];
+          }
+          continue;
+        }
+        if (inCode) {
+          codeLines.push(line);
+          continue;
+        }
+        const trimmed = line.trim();
+        if (!trimmed) {
+          flushPara();
+          continue;
+        }
+        if (line.startsWith("### ")) {
+          flushPara();
+          out.push("<h3>" + line.slice(4) + "</h3>");
+        } else if (line.startsWith("## ")) {
+          flushPara();
+          out.push("<h2>" + line.slice(3) + "</h2>");
+        } else if (line.startsWith("# ")) {
+          flushPara();
+          out.push("<h1>" + line.slice(2) + "</h1>");
+        } else {
+          paraLines.push(line);
+        }
+      }
+      if (inCode) {
+        out.push("<pre><code>" + codeLines.join("\n") + "</code></pre>");
+      }
+      flushPara();
+      return out.join("\n");
+    }
+
+    function setButtonsDisabled(disabled) {
+      document.querySelectorAll(".case-btn").forEach(function(btn) {
+        btn.disabled = disabled;
+      });
+    }
+
+    function resetStages() {
+      STAGES.forEach(function(st) {
+        const el = document.getElementById("stage-" + st);
+        if (el) {
+          el.className = "stage-step";
+        }
+      });
+    }
+
+    function appendLog(status, text) {
+      const logEl = document.getElementById("event-log");
+      const entry = document.createElement("div");
+      entry.className = "log-entry" + (status ? " log-" + status : "");
+      entry.textContent = text;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function finishRun() {
+      if (currentEventSource) {
+        currentEventSource.close();
+        currentEventSource = null;
+      }
+      setButtonsDisabled(false);
+    }
+
+    function handleEvent(type, data) {
+      if (type === "stage") {
+        const stage = data.stage;
+        const status = data.status;
+        const el = document.getElementById("stage-" + stage);
+        if (el) {
+          if (status === "start" || status === "retry") {
+            el.className = "stage-step running";
+          } else if (status === "ok") {
+            el.className = "stage-step ok";
+          } else if (status === "fail") {
+            el.className = "stage-step fail";
+          }
+        }
+        let detail = "[" + stage + "] " + status + ": " + (data.detail || "");
+        if (data.evidence_hash) {
+          detail += " (hash: " + data.evidence_hash.substring(0, 8) + ")";
+        }
+        appendLog(status, detail);
+      } else if (type === "report") {
+        if (data.markdown) {
+          document.getElementById("report-view").innerHTML = renderMarkdown(data.markdown);
+          document.getElementById("report-wrapper").style.display = "block";
+        }
+        appendLog("ok", "[report] Completed: report ready.");
+        finishRun();
+      } else if (type === "refused") {
+        const el = document.getElementById("stage-" + data.stage);
+        if (el) el.className = "stage-step fail";
+        appendLog("fail", "[refused] " + data.stage + ": " + data.reason);
+        finishRun();
+      } else if (type === "error") {
+        appendLog("fail", "[error] " + (data.message || "Pipeline error"));
+        finishRun();
+      }
+    }
+
+    function replayRun(caseId) {
+      appendLog("", "Loading recorded run for " + caseId + "...");
+      fetch("data/" + encodeURIComponent(caseId) + ".json")
+        .then(function(resp) {
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          return resp.json();
+        })
+        .then(function(run) {
+          let at = 0;
+          let prev = 0;
+          run.events.forEach(function(ev) {
+            at += Math.max((ev.t - prev) * 1000, MIN_GAP_MS);
+            prev = ev.t;
+            replayTimers.push(setTimeout(function() {
+              try {
+                handleEvent(ev.event, ev.data);
+              } catch (err) {
+                console.error(err);
+              }
+            }, at));
+          });
+        })
+        .catch(function(err) {
+          handleEvent("error", {message: "could not load recorded run (" + err.message + ")"});
+        });
+    }
+
+    function startRun(caseId) {
+      if (currentEventSource) {
+        currentEventSource.close();
+      }
+      replayTimers.forEach(clearTimeout);
+      replayTimers = [];
+      setButtonsDisabled(true);
+      resetStages();
+
+      document.getElementById("event-log").innerHTML = "";
+      document.getElementById("report-view").innerHTML = "";
+      document.getElementById("report-wrapper").style.display = "none";
+
+      if (STATIC_REPLAY) {
+        replayRun(caseId);
+        return;
+      }
+
+      appendLog("", "Connecting to pipeline runner for " + caseId + "...");
+
+      const es = new EventSource("/api/run/" + encodeURIComponent(caseId));
+      currentEventSource = es;
+
+      ["stage", "report", "refused"].forEach(function(type) {
+        es.addEventListener(type, function(event) {
+          try {
+            handleEvent(type, JSON.parse(event.data));
+          } catch (err) {
+            console.error(err);
+            finishRun();
+          }
+        });
+      });
+
+      es.addEventListener("error", function(event) {
+        let data = {};
+        if (event.data) {
+          try {
+            data = JSON.parse(event.data);
+          } catch (_) {}
+        }
+        handleEvent("error", data);
+      });
+
+      es.onerror = function() {
+        finishRun();
+      };
+    }
+  </script>
+</body>
+</html>
