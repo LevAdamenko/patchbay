@@ -24,6 +24,10 @@ python3 -m venv .venv                         # Python 3.12 or newer
 .venv/bin/python -m patchbay.web              # web UI on http://127.0.0.1:8000
 ```
 
+**Known limitation:** the CVE-2024-22195 recording includes a retry whose prompt quotes a traceback with standard-library paths from the recording machine (Ubuntu, system Python 3.14). Anywhere else, replay stops at that case with `offline replay has no recorded answer`, and the run ends there, before CVE-2024-24762. On those machines run the other two with `--case CVE-2023-32681` and `--case CVE-2024-24762`; all three can be seen in the hosted demo at https://patchbay-demo.vercel.app.
+
+Nebius retires `nvidia/nemotron-3-super-120b-a12b` on 9 November 2026. Offline replay is not affected; for live mode after that date, set `NEMOTRON_MODEL=nvidia/Nemotron-3-Ultra-550b-a55b`.
+
 No Python at all? `site/` is a static copy of the web UI: `scripts/export_static_demo.py` runs the offline pipeline once and saves every event (with its timing) and every report as JSON, and the page plays them back in the browser. Serve it with `python3 -m http.server -d site` or any static host; the banner on the page says it is a replay.
 
 What the CLI prints (abridged):
